@@ -1,0 +1,63 @@
+<div class="container">
+  <h1>Employee Management</h1>
+
+  
+  <div class="form">
+    <input
+      type="text"
+      placeholder="Name"
+      [(ngModel)]="employeeName"
+    >
+
+    <input
+      type="email"
+      placeholder="Email"
+      [(ngModel)]="employeeEmail"
+    >
+
+    <input
+      type="text"
+      placeholder="Department"
+      [(ngModel)]="employeeDepartment"
+    >
+
+    <input
+      type="number"
+      placeholder="Salary"
+      [(ngModel)]="employeeSalary"
+    >
+
+    <button (click)="addEmployee()">Add Employee</button>
+  </div>
+  
+
+  <h2>Employees</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Department</th>
+        <th>Salary</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (employee of employees; track employee.id) {
+        <tr>
+          <td>{{ employee.id }}</td>
+          <td>{{ employee.name }}</td>
+          <td>{{ employee.email }}</td>
+          <td>{{ employee.department }}</td>
+          <td>{{ employee.salary }}</td>
+          <td>
+            <button type="button" [disabled]="deletingIds.has(employee.id)"(click)="deleteEmployee(employee.id)">Delete</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
