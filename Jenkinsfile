@@ -14,6 +14,7 @@ pipeline {
                 bat 'dotnet --version'
                 bat 'node --version'
                 bat 'npm --version'
+                bat 'docker --version'
             }
         }
 
@@ -29,6 +30,14 @@ pipeline {
             steps {
                 dir('EmployeeApi') {
                     bat 'dotnet build --no-restore'
+                }
+            }
+        }
+
+        stage('Backend Test') {
+            steps {
+                dir('EmployeeApi') {
+                    bat 'dotnet test --no-build'
                 }
             }
         }
@@ -49,13 +58,37 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Docker Build') {
             steps {
-                dir('EmployeeApi') {
-                    bat 'dotnet test --no-build'
-                }
+                bat '''
+                    docker build -t employee-backend:%BUILD_NUMBER% EmployeeApi
+                    docker build -t employee-frontend:%BUILD_NUMBER% EmployeeFrontend
+                '''
             }
         }
 
+        stage('Docker Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    bat '''
+                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+
+                        docker tag employee-backend:%BUILD_NUMBER% %DOCKER_USER%/employee-backend:%BUILD_NUMBER%
+                        docker tag employee-frontend:%BUILD_NUMBER% %DOCKER_USER%/employee-frontend:%BUILD_NUMBER%
+
+                        docker push %DOCKER_USER%/employee-backend:%BUILD_NUMBER%
+                        docker push %DOCKER_USER%/employee-frontend:%BUILD_NUMBER%
+
+                        docker logout
+                    '''
+                }
+            }
+        }
     }
 }

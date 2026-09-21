@@ -32,7 +32,7 @@ export class App implements OnInit {
   
   loadEmployees() {
     this.http.get<Employee[]>(
-      'http://localhost:5051/api/employees'
+      'http://localhost:8082/api/employees'
     ).subscribe({
       next: (data) => {
         console.log('Employees from API:', data);
@@ -55,7 +55,7 @@ export class App implements OnInit {
 
     
     
-    this.http.post('http://localhost:5051/api/employees', employee)
+    this.http.post('http://localhost:8082/api/employees', employee)
       .subscribe({
         next: (response) => {
           console.log('Employee added:', response);
@@ -77,7 +77,7 @@ export class App implements OnInit {
     this.deletingIds.add(id);
 
     this.http.delete(
-      `http://localhost:5051/api/employees/${id}`
+      `http://localhost:8082/api/employees/${id}`
     ).subscribe({
       next: () => {
 
