@@ -1,20 +1,27 @@
-stage('EC2 Connection Test') {
-    steps {
-        withCredentials([
-            sshUserPrivateKey(
-                credentialsId: 'ec2-ssh',
-                keyFileVariable: 'SSH_KEY',
-                usernameVariable: 'EC2_USER'
-            )
-        ]) {
-            bat '''
-                icacls "%SSH_KEY%" /inheritance:r
-                icacls "%SSH_KEY%" /grant:r *S-1-5-18:R
-                icacls "%SSH_KEY%" /remove:g *S-1-5-32-545
-                icacls "%SSH_KEY%" /remove:g *S-1-1-0
+pipeline {
+    agent any
 
-                ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no -o IdentitiesOnly=yes %EC2_USER%@44.201.199.195 "echo Jenkins connected successfully"
-            '''
+    stages {
+
+        stage('EC2 Connection Test') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'EC2_USER'
+                    )
+                ]) {
+                    bat '''
+                        icacls "%SSH_KEY%" /inheritance:r
+                        icacls "%SSH_KEY%" /grant:r *S-1-5-18:R
+                        icacls "%SSH_KEY%" /remove:g *S-1-5-32-545
+                        icacls "%SSH_KEY%" /remove:g *S-1-1-0
+
+                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no -o IdentitiesOnly=yes %EC2_USER%@44.201.199.195 "echo Jenkins connected successfully"
+                    '''
+                }
+            }
         }
     }
 }
