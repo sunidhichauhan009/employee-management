@@ -1,9 +1,39 @@
 pipeline {
     agent any
 
+    environment {
+        EC2_HOST = '44.201.199.195'
+        EC2_USER = 'deploy'
+    }
+
     stages {
 
-        stage('EC2 Connection Test') {
+        stage('Build Backend') {
+            steps {
+                dir('EmployeeApi') {
+                    bat '''
+                        if exist publish rmdir /s /q publish
+
+                        dotnet restore
+
+                        dotnet publish -c Release -r linux-x64 --self-contained true -o publish
+                    '''
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('EmployeeFrontend') {
+                    bat '''
+                        npm ci
+                        npm run build
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Backend') {
             steps {
                 withCredentials([
                     sshUserPrivateKey(
@@ -18,7 +48,52 @@ pipeline {
                         icacls "%SSH_KEY%" /remove:g *S-1-5-32-545
                         icacls "%SSH_KEY%" /remove:g *S-1-1-0
 
-                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no -o IdentitiesOnly=yes %EC2_USER%@44.201.199.195 "echo Jenkins connected successfully"
+                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no %EC2_USER%@%EC2_HOST% "rm -rf /opt/employee-api/publish"
+
+                        scp -r -i "%SSH_KEY%" EmployeeApi\\publish %EC2_USER%@%EC2_HOST%:/opt/employee-api/
+
+                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no %EC2_USER%@%EC2_HOST% "sudo /usr/local/bin/deploy-employee-api"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Frontend') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'EC2_USER'
+                    )
+                ]) {
+                    bat '''
+                        icacls "%SSH_KEY%" /inheritance:r
+                        icacls "%SSH_KEY%" /grant:r *S-1-5-18:R
+                        icacls "%SSH_KEY%" /remove:g *S-1-5-32-545
+                        icacls "%SSH_KEY%" /remove:g *S-1-1-0
+
+                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no %EC2_USER%@%EC2_HOST% "rm -rf /var/www/employee-frontend/browser"
+
+                        scp -r -i "%SSH_KEY%" EmployeeFrontend\\dist\\EmployeeFrontend\\browser %EC2_USER%@%EC2_HOST%:/var/www/employee-frontend/
+                    '''
+                }
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'EC2_USER'
+                    )
+                ]) {
+                    bat '''
+                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no %EC2_USER%@%EC2_HOST% "curl -I http://127.0.0.1"
+
+                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no %EC2_USER%@%EC2_HOST% "curl http://127.0.0.1:5000/api/employees"
                     '''
                 }
             }
