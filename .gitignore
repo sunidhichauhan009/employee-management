@@ -12,3 +12,6 @@
 # OS
 .DS_Store
 Thumbs.db
+
+EmployeeFrontend/dist/
+EmployeeFrontend/node_modules/
