@@ -78,6 +78,7 @@ pipeline {
                 ]) {
                     bat '''
                         echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                        if errorlevel 1 exit /b 1
 
                         docker tag employee-backend:%BUILD_NUMBER% %DOCKER_USER%/employee-backend:%BUILD_NUMBER%
                         docker tag employee-frontend:%BUILD_NUMBER% %DOCKER_USER%/employee-frontend:%BUILD_NUMBER%

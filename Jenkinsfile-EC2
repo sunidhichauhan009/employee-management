@@ -67,20 +67,49 @@ pipeline {
                         usernameVariable: 'EC2_USER'
                     )
                 ]) {
-                    bat '''
-                        if not exist "EmployeeFrontend\\dist\\EmployeeFrontend\\browser" (
-                            echo Angular build output not found
-                            exit /b 1
-                        )
-
-                        icacls "%SSH_KEY%" /inheritance:r
-                        icacls "%SSH_KEY%" /grant:r *S-1-5-18:R
-                        icacls "%SSH_KEY%" /remove:g *S-1-5-32-545
-                        icacls "%SSH_KEY%" /remove:g *S-1-1-0
-
-                        ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no %EC2_USER%@%EC2_HOST% "rm -rf /var/www/employee-frontend/browser"
-
-                        scp -r -i "%SSH_KEY%" EmployeeFrontend\\dist\\EmployeeFrontend\\browser %EC2_USER%@%EC2_HOST%:/var/www/employee-frontend/
+                
+                    powershell '''
+                        $dist = Join-Path $env:WORKSPACE "EmployeeFrontend\\dist"
+        
+                        if (-not (Test-Path $dist)) {
+                            Write-Host "dist folder not found:"
+                            Write-Host $dist
+                            exit 1
+                        }
+        
+                        $index = Get-ChildItem $dist -Recurse -File -Filter "index.html" |
+                                 Select-Object -First 1
+        
+                        if (-not $index) {
+                            Write-Host "Angular index.html not found inside dist"
+                            Get-ChildItem $dist -Recurse -File | Select-Object -First 20
+                            exit 1
+                        }
+        
+                        $browser = $index.Directory.FullName
+        
+                        Write-Host "Angular deployment folder:"
+                        Write-Host $browser
+        
+                        $zip = Join-Path $env:WORKSPACE "frontend.zip"
+        
+                        if (Test-Path $zip) {
+                            Remove-Item $zip -Force
+                        }
+        
+                        Compress-Archive -Path "$browser\\*" -DestinationPath $zip -Force
+        
+                        Write-Host "Frontend zip created:"
+                        Write-Host $zip
+        
+                        & icacls $env:SSH_KEY /inheritance:r
+                        & icacls $env:SSH_KEY /grant:r *S-1-5-18:R
+                        & icacls $env:SSH_KEY /remove:g *S-1-5-32-545
+                        & icacls $env:SSH_KEY /remove:g *S-1-1-0
+        
+                        & scp -i $env:SSH_KEY $zip "$($env:EC2_USER)@$($env:EC2_HOST):/var/www/employee-frontend/frontend.zip"
+        
+                        & ssh -i $env:SSH_KEY -o StrictHostKeyChecking=no "$($env:EC2_USER)@$($env:EC2_HOST)" "rm -rf /var/www/employee-frontend/browser && mkdir -p /var/www/employee-frontend/browser && unzip -oq /var/www/employee-frontend/frontend.zip -d /var/www/employee-frontend/browser && rm /var/www/employee-frontend/frontend.zip"
                     '''
                 }
             }
