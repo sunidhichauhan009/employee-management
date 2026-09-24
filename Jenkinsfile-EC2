@@ -26,8 +26,26 @@ pipeline {
             steps {
                 dir('EmployeeFrontend') {
                     bat '''
-                        npm ci
-                        npm run build
+                        echo ===== FRONTEND DIRECTORY =====
+                        dir
+        
+                        echo ===== NPM VERSION =====
+                        npm.cmd --version
+        
+                        echo ===== INSTALLING =====
+                        npm.cmd ci
+        
+                        echo ===== BUILDING ANGULAR =====
+                        npm.cmd run build
+        
+                        echo ===== CHECKING DIST =====
+                        if not exist dist (
+                            echo DIST FOLDER WAS NOT CREATED
+                            exit /b 1
+                        )
+        
+                        echo ===== DIST CONTENT =====
+                        dir dist /s /b
                     '''
                 }
             }
@@ -128,9 +146,9 @@ pipeline {
                         icacls "%SSH_KEY%" /grant:r *S-1-5-18:R
                         icacls "%SSH_KEY%" /remove:g *S-1-5-32-545
                         icacls "%SSH_KEY%" /remove:g *S-1-1-0
-        
+
                         ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no -o IdentitiesOnly=yes %EC2_USER%@%EC2_HOST% "curl -I http://127.0.0.1"
-        
+
                         ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no -o IdentitiesOnly=yes %EC2_USER%@%EC2_HOST% "curl http://127.0.0.1:5000/api/employees"
                     '''
                 }
