@@ -23,33 +23,32 @@ pipeline {
         }
 
         stage('Build Frontend') {
-            steps {
-                dir('EmployeeFrontend') {
-                    bat '''
-                        echo ===== NODE =====
-                        node --version
-        
-                        echo ===== NPM =====
-                        npm.cmd --version
-        
-                        echo ===== NPM INSTALL =====
-                        npm.cmd ci
-        
-                        echo ===== ANGULAR BUILD =====
-                        npm.cmd run build
-        
-                        echo ===== CHECK DIST =====
-                        if not exist dist (
-                            echo ERROR: DIST NOT CREATED
-                            exit /b 1
-                        )
-        
-                        echo ===== DIST CONTENT =====
-                        dir dist /s /b
-                    '''
+                steps {
+                    dir('EmployeeFrontend') {
+                    
+                        bat 'echo ===== CHECK PACKAGE ====='
+                        bat 'dir package.json'
+            
+                        bat 'echo ===== NODE ====='
+                        bat 'node --version'
+            
+                        bat 'echo ===== NPM ====='
+                        bat 'npm.cmd --version'
+            
+                        bat 'echo ===== NPM INSTALL ====='
+                        bat 'npm.cmd ci'
+            
+                        bat 'echo ===== ANGULAR BUILD ====='
+                        bat 'npm.cmd run build'
+            
+                        bat 'echo ===== CHECK DIST ====='
+                        bat 'if not exist dist exit /b 1'
+            
+                        bat 'echo ===== DIST CONTENT ====='
+                        bat 'dir dist /s /b'
+                    }
                 }
             }
-        }
         stage('Deploy Backend') {
             steps {
                 withCredentials([
