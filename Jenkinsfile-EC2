@@ -32,15 +32,15 @@ pipeline {
                         echo ===== NPM =====
                         npm.cmd --version
         
-                        echo ===== INSTALL =====
+                        echo ===== NPM INSTALL =====
                         npm.cmd ci
         
                         echo ===== ANGULAR BUILD =====
                         npm.cmd run build
         
-                        echo ===== DIST CHECK =====
+                        echo ===== CHECK DIST =====
                         if not exist dist (
-                            echo ERROR: dist folder was not created
+                            echo ERROR: DIST NOT CREATED
                             exit /b 1
                         )
         
