@@ -26,21 +26,21 @@ pipeline {
             steps {
                 dir('EmployeeFrontend') {
                     bat '''
-                        echo ===== FRONTEND DIRECTORY =====
-                        dir
+                        echo ===== NODE =====
+                        node --version
         
-                        echo ===== NPM VERSION =====
+                        echo ===== NPM =====
                         npm.cmd --version
         
-                        echo ===== INSTALLING =====
+                        echo ===== INSTALL =====
                         npm.cmd ci
         
-                        echo ===== BUILDING ANGULAR =====
+                        echo ===== ANGULAR BUILD =====
                         npm.cmd run build
         
-                        echo ===== CHECKING DIST =====
+                        echo ===== DIST CHECK =====
                         if not exist dist (
-                            echo DIST FOLDER WAS NOT CREATED
+                            echo ERROR: dist folder was not created
                             exit /b 1
                         )
         
@@ -50,7 +50,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy Backend') {
             steps {
                 withCredentials([
